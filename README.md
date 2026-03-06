@@ -52,7 +52,13 @@ import Redis from "ioredis";
 import { RedisCacheStore } from "@plasius/graph-cache-redis";
 
 const redis = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379");
-const cacheStore = new RedisCacheStore({ redis, namespace: "graph" });
+const cacheStore = new RedisCacheStore({
+  redis,
+  namespace: "graph",
+  maxCommandRetries: 2,
+  retryDelayMs: 10,
+  enableStaleFallback: true,
+});
 
 await cacheStore.set("user:1", {
   key: "user:1",
@@ -64,6 +70,15 @@ await cacheStore.set("user:1", {
   source: "user.profile",
   tags: ["user"],
 }, { ttlSeconds: 300 });
+
+const leaseOwner = await cacheStore.acquireStampedeLease("user:1", { ttlSeconds: 5 });
+if (leaseOwner) {
+  try {
+    // perform a single-owner revalidation
+  } finally {
+    await cacheStore.releaseStampedeLease("user:1", leaseOwner);
+  }
+}
 ```
 
 ---
@@ -78,6 +93,20 @@ npm run typecheck
 npm run test:coverage
 npm run build
 ```
+
+---
+
+## Resilience Features
+
+- Command retry controls for transient Redis failures.
+- Stale fallback reads with hard TTL enforcement during read failover.
+- Stampede lease primitives for single-owner refresh:
+  - `acquireStampedeLease`
+  - `releaseStampedeLease`
+- Integration-style tests cover:
+  - failover stale reads,
+  - reconnect retry path,
+  - hard TTL stale expiry.
 
 ---
 
