@@ -10,7 +10,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 
 - **Added**
   - Stampede lease primitives: `acquireStampedeLease` and `releaseStampedeLease`.
-  - Command retry controls (`maxCommandRetries`, `retryDelayMs`).
+  - Command retry controls (`maxCommandRetries`, `retryDelayMs`, `retryJitterRatio`).
   - Stale fallback read behavior with hard TTL enforcement.
   - Optional telemetry sink support for retry/error/fallback/lease analytics.
   - Integration-style tests for failover, reconnect, and stale fallback expiry.

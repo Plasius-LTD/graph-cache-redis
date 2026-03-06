@@ -12,6 +12,8 @@ export interface RedisCacheStoreOptions {
   namespace?: string;
   maxCommandRetries?: number;
   retryDelayMs?: number;
+  retryJitterRatio?: number;
+  random?: () => number;
   enableStaleFallback?: boolean;
   now?: () => number;
   telemetry?: TelemetrySink;
@@ -27,6 +29,8 @@ export class RedisCacheStore implements CacheStore {
   private readonly namespace: string;
   private readonly maxCommandRetries: number;
   private readonly retryDelayMs: number;
+  private readonly retryJitterRatio: number;
+  private readonly random: () => number;
   private readonly enableStaleFallback: boolean;
   private readonly now: () => number;
   private readonly telemetry?: TelemetrySink;
@@ -37,6 +41,8 @@ export class RedisCacheStore implements CacheStore {
     this.namespace = options.namespace ?? "graph";
     this.maxCommandRetries = Math.max(0, options.maxCommandRetries ?? 1);
     this.retryDelayMs = Math.max(0, options.retryDelayMs ?? 10);
+    this.retryJitterRatio = Math.min(1, Math.max(0, options.retryJitterRatio ?? 0.2));
+    this.random = options.random ?? (() => Math.random());
     this.enableStaleFallback = options.enableStaleFallback ?? true;
     this.now = options.now ?? (() => Date.now());
     this.telemetry = options.telemetry;
@@ -230,7 +236,7 @@ export class RedisCacheStore implements CacheStore {
             value: 1,
             unit: "count",
           });
-          await this.wait(this.retryDelayMs);
+          await this.wait(this.calculateRetryDelayMs(attempt));
         }
       }
     }
@@ -257,6 +263,20 @@ export class RedisCacheStore implements CacheStore {
     await new Promise((resolve) => {
       setTimeout(resolve, delayMs);
     });
+  }
+
+  private calculateRetryDelayMs(attempt: number): number {
+    if (this.retryDelayMs <= 0) {
+      return 0;
+    }
+
+    const base = this.retryDelayMs * 2 ** Math.max(0, attempt);
+    const jitterAmplitude = Math.floor(base * this.retryJitterRatio);
+    if (jitterAmplitude <= 0) {
+      return base;
+    }
+
+    return base + Math.floor(this.random() * (jitterAmplitude + 1));
   }
 
   private readStaleFallback<T>(redisKey: string): CacheEnvelope<T> | null {

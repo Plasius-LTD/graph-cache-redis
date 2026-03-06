@@ -57,6 +57,7 @@ const cacheStore = new RedisCacheStore({
   namespace: "graph",
   maxCommandRetries: 2,
   retryDelayMs: 10,
+  retryJitterRatio: 0.2,
   enableStaleFallback: true,
   telemetry,
 });
