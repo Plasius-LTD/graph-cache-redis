@@ -1,4 +1,4 @@
-import type { CacheEnvelope, CacheSetOptions, CacheStore, Version } from "@plasius/graph-contracts";
+import type { CacheEnvelope, CacheSetOptions, CacheStore, TelemetrySink, Version } from "@plasius/graph-contracts";
 
 export interface RedisLike {
   get(key: string): Promise<string | null>;
@@ -14,6 +14,7 @@ export interface RedisCacheStoreOptions {
   retryDelayMs?: number;
   enableStaleFallback?: boolean;
   now?: () => number;
+  telemetry?: TelemetrySink;
 }
 
 export interface StampedeLeaseOptions {
@@ -28,6 +29,7 @@ export class RedisCacheStore implements CacheStore {
   private readonly retryDelayMs: number;
   private readonly enableStaleFallback: boolean;
   private readonly now: () => number;
+  private readonly telemetry?: TelemetrySink;
   private readonly staleFallbackStore = new Map<string, CacheEnvelope<unknown>>();
 
   public constructor(options: RedisCacheStoreOptions) {
@@ -37,6 +39,7 @@ export class RedisCacheStore implements CacheStore {
     this.retryDelayMs = Math.max(0, options.retryDelayMs ?? 10);
     this.enableStaleFallback = options.enableStaleFallback ?? true;
     this.now = options.now ?? (() => Date.now());
+    this.telemetry = options.telemetry;
   }
 
   public async get<T>(key: string): Promise<CacheEnvelope<T> | null> {
@@ -47,8 +50,20 @@ export class RedisCacheStore implements CacheStore {
       if (envelope) {
         this.staleFallbackStore.set(redisKey, envelope as CacheEnvelope<unknown>);
       }
+      this.telemetry?.metric({
+        name: "graph.redis.read.success",
+        value: 1,
+        unit: "count",
+        tags: { op: "get" },
+      });
       return envelope;
     } catch {
+      this.telemetry?.metric({
+        name: "graph.redis.read.fallback",
+        value: 1,
+        unit: "count",
+        tags: { op: "get" },
+      });
       return this.readStaleFallback<T>(redisKey);
     }
   }
@@ -69,6 +84,12 @@ export class RedisCacheStore implements CacheStore {
         return envelope;
       });
     } catch {
+      this.telemetry?.metric({
+        name: "graph.redis.read.fallback",
+        value: 1,
+        unit: "count",
+        tags: { op: "mget" },
+      });
       return redisKeys.map((redisKey) => this.readStaleFallback<T>(redisKey));
     }
   }
@@ -132,6 +153,14 @@ export class RedisCacheStore implements CacheStore {
     const ownerId = options.ownerId ?? `${this.now()}_${Math.random().toString(36).slice(2)}`;
     const leaseKey = this.leaseKey(key);
     const result = await this.exec(() => this.redis.set(leaseKey, ownerId, "EX", ttlSeconds, "NX"));
+    this.telemetry?.metric({
+      name: "graph.redis.lease.acquire",
+      value: 1,
+      unit: "count",
+      tags: {
+        acquired: result === "OK" ? "true" : "false",
+      },
+    });
     return result === "OK" ? ownerId : null;
   }
 
@@ -139,10 +168,22 @@ export class RedisCacheStore implements CacheStore {
     const leaseKey = this.leaseKey(key);
     const current = await this.exec(() => this.redis.get(leaseKey));
     if (current !== ownerId) {
+      this.telemetry?.metric({
+        name: "graph.redis.lease.release",
+        value: 1,
+        unit: "count",
+        tags: { released: "false" },
+      });
       return false;
     }
 
     await this.exec(() => this.redis.del(leaseKey));
+    this.telemetry?.metric({
+      name: "graph.redis.lease.release",
+      value: 1,
+      unit: "count",
+      tags: { released: "true" },
+    });
     return true;
   }
 
@@ -184,11 +225,27 @@ export class RedisCacheStore implements CacheStore {
       } catch (error) {
         lastError = error;
         if (attempt < this.maxCommandRetries) {
+          this.telemetry?.metric({
+            name: "graph.redis.command.retry",
+            value: 1,
+            unit: "count",
+          });
           await this.wait(this.retryDelayMs);
         }
       }
     }
 
+    const message = lastError instanceof Error ? lastError.message : "redis command failed";
+    this.telemetry?.metric({
+      name: "graph.redis.command.error",
+      value: 1,
+      unit: "count",
+    });
+    this.telemetry?.error({
+      message,
+      source: "graph-cache-redis",
+      code: "REDIS_COMMAND_FAILED",
+    });
     throw lastError;
   }
 

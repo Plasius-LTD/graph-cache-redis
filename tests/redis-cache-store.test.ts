@@ -1,5 +1,5 @@
 import type { CacheEnvelope } from "@plasius/graph-contracts";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { RedisCacheStore } from "../src/redis-cache-store.js";
 
@@ -228,5 +228,48 @@ describe("RedisCacheStore", () => {
     const recovered = await store.get<{ id: number }>("user:1");
     expect(recovered?.value).toEqual({ id: 1 });
     expect(redis.observedReadFailures).toBe(1);
+  });
+
+  it("emits telemetry for retries, fallbacks, command errors, and lease operations", async () => {
+    const telemetry = {
+      metric: vi.fn(),
+      error: vi.fn(),
+      trace: vi.fn(),
+    };
+    const redis = new FakeRedis();
+    const store = new RedisCacheStore({
+      redis,
+      namespace: "test",
+      maxCommandRetries: 1,
+      retryDelayMs: 0,
+      telemetry,
+    });
+
+    await store.set("user:1", envelope("user:1", { id: 1 }, 1));
+    redis.failReads = true;
+    await store.get("user:1");
+    redis.failReads = false;
+    const owner = await store.acquireStampedeLease("user:lease", { ownerId: "owner-a" });
+    expect(owner).toBe("owner-a");
+    await store.releaseStampedeLease("user:lease", "owner-a");
+
+    expect(telemetry.metric).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "graph.redis.command.retry" }),
+    );
+    expect(telemetry.metric).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "graph.redis.read.fallback" }),
+    );
+    expect(telemetry.metric).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "graph.redis.command.error" }),
+    );
+    expect(telemetry.metric).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "graph.redis.lease.acquire" }),
+    );
+    expect(telemetry.metric).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "graph.redis.lease.release" }),
+    );
+    expect(telemetry.error).toHaveBeenCalledWith(
+      expect.objectContaining({ code: "REDIS_COMMAND_FAILED" }),
+    );
   });
 });

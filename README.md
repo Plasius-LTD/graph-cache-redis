@@ -58,6 +58,7 @@ const cacheStore = new RedisCacheStore({
   maxCommandRetries: 2,
   retryDelayMs: 10,
   enableStaleFallback: true,
+  telemetry,
 });
 
 await cacheStore.set("user:1", {
@@ -103,6 +104,10 @@ npm run build
 - Stampede lease primitives for single-owner refresh:
   - `acquireStampedeLease`
   - `releaseStampedeLease`
+- Telemetry support (optional `TelemetrySink`) for:
+  - command retries/errors,
+  - stale fallback reads,
+  - lease acquire/release outcomes.
 - Integration-style tests cover:
   - failover stale reads,
   - reconnect retry path,
