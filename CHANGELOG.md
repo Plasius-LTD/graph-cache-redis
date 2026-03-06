@@ -9,6 +9,20 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 ## [Unreleased]
 
 - **Added**
+  - (placeholder)
+
+- **Changed**
+  - (placeholder)
+
+- **Fixed**
+  - (placeholder)
+
+- **Security**
+  - (placeholder)
+
+## [0.1.2] - 2026-03-06
+
+- **Added**
   - Stampede lease primitives: `acquireStampedeLease` and `releaseStampedeLease`.
   - Command retry controls (`maxCommandRetries`, `retryDelayMs`, `retryJitterRatio`).
   - Stale fallback read behavior with hard TTL enforcement.
@@ -36,3 +50,4 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 
 
 [0.1.1]: https://github.com/Plasius-LTD/graph-cache-redis/releases/tag/v0.1.1
+[0.1.2]: https://github.com/Plasius-LTD/graph-cache-redis/releases/tag/v0.1.2
