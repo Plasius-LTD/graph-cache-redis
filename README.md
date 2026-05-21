@@ -114,6 +114,25 @@ npm run build
   - reconnect retry path,
   - hard TTL stale expiry.
 
+## Cached Data Privacy Guidance
+
+The adapter serializes the caller-provided cache envelope as-is. It does not redact,
+encrypt, or classify payload fields on your behalf. Callers must classify payloads
+before caching them and keep TTLs within the source system's privacy boundary.
+
+The package exports `REDIS_CACHE_ENTRY_PRIVACY_GUIDANCE` for the baseline classes
+used by the cached-graph rollout:
+
+| Class | Cacheable | Soft TTL | Hard TTL | Required handling |
+| --- | --- | ---: | ---: | --- |
+| `public-reference` | Yes | 60s | 900s | Keep only fields required by the consumer response. |
+| `tenant-scoped-derived` | Yes | 30s | 300s | Minimize fields and remove raw identifiers or free-text notes. |
+| `sensitive-derived` | Yes | 15s | 60s | Pseudonymize where possible and avoid auth/session material entirely. |
+| `secret-or-regulated` | No | 0s | 0s | Never cache tokens, credentials, recovery codes, raw claims, or unredacted PII. |
+
+Use the guidance as a ceiling, not a default. If the authoritative system has a
+shorter retention boundary, the cache TTL must be shorter too.
+
 ---
 
 ## Architecture

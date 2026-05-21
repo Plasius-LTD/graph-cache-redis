@@ -9,7 +9,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 ## [Unreleased]
 
 - **Added**
-  - (placeholder)
+  - Published `REDIS_CACHE_ENTRY_PRIVACY_GUIDANCE` plus ADR/README guidance for cache entry retention, redaction, and never-cache classes.
 
 - **Changed**
   - (placeholder)
