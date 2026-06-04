@@ -225,12 +225,11 @@ jobs:
 
           # Ensure tag is available for release commands even when direct
           # branch pushes are disallowed by protected-branch rules.
-          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" >/dev/null 2>&1; then
+          if git ls-remote --tags --exit-code origin "refs/tags/${TAG}" >/dev/null 2>&1; then
             echo "Tag ${TAG} already exists remotely."
           else
-            gh api -X POST repos/${GITHUB_REPOSITORY}/git/refs \
-              -f ref="refs/tags/${TAG}" \
-              -f sha="${SHA}"
+            git tag "${TAG}" "${SHA}"
+            git push origin "${TAG}"
           fi
 
           if gh release view "$TAG" >/dev/null 2>&1; then
