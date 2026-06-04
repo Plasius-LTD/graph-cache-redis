@@ -15,7 +15,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Fixed**
-  - (placeholder)
+  - Adjusted `cd.yml` release flow to avoid direct pushes to protected `main` branches while still publishing releases via remote tag-based release paths.
 
 - **Security**
   - (placeholder)
