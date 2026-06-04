@@ -225,11 +225,26 @@ jobs:
 
           # Ensure tag is available for release commands even when direct
           # branch pushes are disallowed by protected-branch rules.
-          if git ls-remote --tags --exit-code origin "refs/tags/${TAG}" >/dev/null 2>&1; then
-            echo "Tag ${TAG} already exists remotely."
+          if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
+            echo "Local tag ${TAG} already exists."
           else
+            echo "Creating local tag ${TAG} at ${SHA}."
             git tag "${TAG}" "${SHA}"
+          fi
+
+          REMOTE_TAG_SHA=$(git ls-remote --tags origin | awk -v tag="refs/tags/${TAG}^{}" '$2 == tag {print $1; exit}')
+          if [ -z "$REMOTE_TAG_SHA" ]; then
+            REMOTE_TAG_SHA=$(git ls-remote --tags origin | awk -v tag="refs/tags/${TAG}" '$2 == tag {print $1; exit}')
+          fi
+
+          if [ -z "$REMOTE_TAG_SHA" ]; then
+            echo "Tag ${TAG} does not exist remotely; pushing local tag."
             git push origin "${TAG}"
+          elif [ "$REMOTE_TAG_SHA" != "$SHA" ]; then
+            echo "Remote tag ${TAG} points to ${REMOTE_TAG_SHA}, expected ${SHA}. Refusing to overwrite existing tag."
+            exit 1
+          else
+            echo "Tag ${TAG} already exists remotely at expected SHA ${SHA}."
           fi
 
           if gh release view "$TAG" >/dev/null 2>&1; then
