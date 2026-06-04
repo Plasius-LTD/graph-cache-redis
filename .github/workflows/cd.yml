@@ -84,12 +84,12 @@ jobs:
           fi
 
           echo "New version: $NEW_VER"
-          git push --follow-tags
 
           # Expose tag (vX.Y.Z) and version (X.Y.Z) for later steps
           VER_NO_V=${NEW_VER#v}
           echo "tag=$NEW_VER" >> "$GITHUB_OUTPUT"
           echo "version=$VER_NO_V" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
           NAME=$(node -p "require('./package.json').name")
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
@@ -214,14 +214,25 @@ jobs:
 
           git add "$FILE"
           git commit -m "docs(changelog): release v${VERSION}"
-          git push
 
-      - name: Create GitHub Release draft (immutable-safe)
+      - name: Ensure release tag and release draft (immutable-safe)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           TAG="${{ steps.pkg.outputs.tag }}"
+          SHA="${{ steps.pkg.outputs.sha }}"
+
+          # Ensure tag is available for release commands even when direct
+          # branch pushes are disallowed by protected-branch rules.
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" >/dev/null 2>&1; then
+            echo "Tag ${TAG} already exists remotely."
+          else
+            gh api -X POST repos/${GITHUB_REPOSITORY}/git/refs \
+              -f ref="refs/tags/${TAG}" \
+              -f sha="${SHA}"
+          fi
+
           if gh release view "$TAG" >/dev/null 2>&1; then
             IS_DRAFT="$(gh release view "$TAG" --json isDraft --jq '.isDraft')"
             if [ "$IS_DRAFT" != "true" ]; then
