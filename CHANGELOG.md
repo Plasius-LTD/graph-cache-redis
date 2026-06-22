@@ -15,6 +15,20 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Fixed**
+  - (placeholder)
+
+- **Security**
+  - (placeholder)
+
+## [0.1.10] - 2026-06-22
+
+- **Added**
+  - (placeholder)
+
+- **Changed**
+  - (placeholder)
+
+- **Fixed**
   - Adjusted `cd.yml` release flow to avoid direct pushes to protected `main` branches while still publishing releases via remote tag-based release paths.
 
 - **Security**
@@ -127,3 +141,4 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 [0.1.5]: https://github.com/Plasius-LTD/graph-cache-redis/releases/tag/v0.1.5
 [0.1.6]: https://github.com/Plasius-LTD/graph-cache-redis/releases/tag/v0.1.6
 [0.1.7]: https://github.com/Plasius-LTD/graph-cache-redis/releases/tag/v0.1.7
+[0.1.10]: https://github.com/Plasius-LTD/graph-cache-redis/releases/tag/v0.1.10
