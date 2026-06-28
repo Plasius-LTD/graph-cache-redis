@@ -12,6 +12,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Changed**
+  - Refreshed the published `@plasius/graph-contracts` and `ioredis` dependencies to their latest released versions.
   - (placeholder)
 
 - **Fixed**
