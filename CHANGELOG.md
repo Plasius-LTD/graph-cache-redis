@@ -12,6 +12,20 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Changed**
+  - (placeholder)
+
+- **Fixed**
+  - (placeholder)
+
+- **Security**
+  - (placeholder)
+
+## [0.1.12] - 2026-06-28
+
+- **Added**
+  - (placeholder)
+
+- **Changed**
   - Refreshed the published `@plasius/graph-contracts` and `ioredis` dependencies to their latest released versions.
   - (placeholder)
 
@@ -158,3 +172,4 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 [0.1.7]: https://github.com/Plasius-LTD/graph-cache-redis/releases/tag/v0.1.7
 [0.1.10]: https://github.com/Plasius-LTD/graph-cache-redis/releases/tag/v0.1.10
 [0.1.11]: https://github.com/Plasius-LTD/graph-cache-redis/releases/tag/v0.1.11
+[0.1.12]: https://github.com/Plasius-LTD/graph-cache-redis/releases/tag/v0.1.12
