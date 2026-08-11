@@ -5,3 +5,4 @@
 - [ADR-0003: Resilient Read and Stampede Primitives](./adr-0003-resilient-read-and-stampede-primitives.md)
 - [ADR-0004: Cache Adapter Telemetry Baseline](./adr-0004-cache-telemetry-baseline.md)
 - [ADR-0005: Cache Privacy Classification Baseline](./adr-0005-cache-privacy-classification-baseline.md)
+- [ADR-0006: Hosted OIDC Package Publication](./adr-0006-hosted-oidc-package-publication.md)
