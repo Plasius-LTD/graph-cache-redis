@@ -51,7 +51,7 @@
   },
   "homepage": "https://github.com/Plasius-LTD/graph-cache-redis#readme",
   "dependencies": {
-    "@plasius/graph-contracts": "^0.1.8",
+    "@plasius/graph-contracts": "^0.1.9",
     "ioredis": "^5.11.1"
   },
   "devDependencies": {
