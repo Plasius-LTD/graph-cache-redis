@@ -1,6 +1,6 @@
 {
   "name": "@plasius/graph-cache-redis",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "Redis cache adapter for the graph gateway cache port",
   "type": "module",
   "sideEffects": false,
